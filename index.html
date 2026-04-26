@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="id">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+	<meta name="theme-color" content="#0f766e" />
+	<meta name="description" content="Estimasi perpindahan lantai kampus berbasis sensor gerak (PWA)." />
+	<link rel="manifest" href="manifest.json" />
+	<link rel="stylesheet" href="style.css" />
+	<title>Navigasi Lantai Kampus</title>
+</head>
+<body>
+	<main class="app-shell">
+		<header class="header">
+			<h1>Navigasi Lantai Kampus</h1>
+			<p>Estimasi perpindahan lantai berbasis sensor gerak. Hasil bersifat perkiraan.</p>
+		</header>
+
+		<section class="card">
+			<label for="roomSelect">Pilih ruang tujuan</label>
+			<select id="roomSelect"></select>
+
+			<label for="startFloor">Pilih lantai awal</label>
+			<select id="startFloor"></select>
+
+			<button id="startBtn" class="btn primary">Mulai Navigasi</button>
+			<button id="permissionBtn" class="btn secondary" hidden>Aktifkan Sensor Gerak</button>
+		</section>
+
+		<section class="card">
+			<h2>Status Navigasi</h2>
+			<div class="status-grid">
+				<p>Ruang tujuan:</p>
+				<strong id="targetRoom">-</strong>
+
+				<p>Lantai tujuan:</p>
+				<strong id="targetFloor">-</strong>
+
+				<p>Estimasi lantai saat ini:</p>
+				<strong id="currentFloor">-</strong>
+
+				<p>Status:</p>
+				<strong id="statusText">Belum mulai</strong>
+			</div>
+			<p id="hintText" class="hint">Pilih ruang dan lantai awal, lalu tekan Mulai Navigasi.</p>
+		</section>
+
+		<section class="card">
+			<h2>Validasi Manual</h2>
+			<div class="manual-actions">
+				<button id="upBtn" class="btn">Naik 1 Lantai</button>
+				<button id="downBtn" class="btn">Turun 1 Lantai</button>
+			</div>
+		</section>
+	</main>
+
+	<script src="app.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,136 @@
+:root {
+  color-scheme: light;
+  --bg: #f0fdfa;
+  --surface: #ffffff;
+  --ink: #0f172a;
+  --subtle: #475569;
+  --primary: #0f766e;
+  --primary-dark: #115e59;
+  --border: #cbd5e1;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--ink);
+  background: linear-gradient(180deg, #ccfbf1 0%, var(--bg) 45%, #f8fafc 100%);
+  min-height: 100vh;
+}
+
+.app-shell {
+  width: min(100%, 400px);
+  margin: 0 auto;
+  padding: 16px 12px 28px;
+}
+
+.header h1 {
+  margin: 4px 0 8px;
+  font-size: 1.4rem;
+}
+
+.header p {
+  margin: 0 0 14px;
+  color: var(--subtle);
+  font-size: 0.92rem;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+}
+
+.card h2 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+
+label {
+  display: block;
+  margin: 8px 0 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+select,
+button {
+  width: 100%;
+  min-height: 44px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  font-size: 0.96rem;
+}
+
+select {
+  padding: 0 12px;
+  background: #fff;
+}
+
+.btn {
+  margin-top: 8px;
+  background: #e2e8f0;
+  color: #0f172a;
+  border: 0;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.08s ease, background 0.2s ease;
+}
+
+.btn:active {
+  transform: scale(0.99);
+}
+
+.btn.primary {
+  background: var(--primary);
+  color: #fff;
+}
+
+.btn.primary:hover {
+  background: var(--primary-dark);
+}
+
+.btn.secondary {
+  background: #334155;
+  color: #fff;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 10px;
+  align-items: center;
+}
+
+.status-grid p,
+.status-grid strong {
+  margin: 0;
+}
+
+.hint {
+  margin: 12px 0 0;
+  color: var(--subtle);
+  font-size: 0.88rem;
+}
+
+.manual-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+@media (max-width: 360px) {
+  .header h1 {
+    font-size: 1.2rem;
+  }
+
+  .status-grid {
+    grid-template-columns: 1fr;
+  }
+}
