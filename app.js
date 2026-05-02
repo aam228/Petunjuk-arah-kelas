@@ -9,6 +9,8 @@ const MAX_FLOOR = 12;
 const MIN_FLOOR = 1;
 const MOTION_THRESHOLD = 12;
 const DETECTION_COOLDOWN_MS = 4000;
+const SENSOR_SAMPLE_COUNT = 8;
+const SENSOR_TOLERANCE = { y: 1.2, z: 1.2 };
 
 const roomSelect = document.getElementById("roomSelect");
 const startFloorSelect = document.getElementById("startFloor");
@@ -22,6 +24,16 @@ const targetFloorEl = document.getElementById("targetFloor");
 const currentFloorEl = document.getElementById("currentFloor");
 const statusTextEl = document.getElementById("statusText");
 const hintTextEl = document.getElementById("hintText");
+const startArBtn = document.getElementById("startArBtn");
+
+// AR elements
+const arRoot = document.getElementById("arRoot");
+const arVideo = document.getElementById("arVideo");
+const arOverlay = document.getElementById("arOverlay");
+const arObjectEl = document.getElementById("arObject");
+const arFloorNumber = document.getElementById("arFloorNumber");
+const arDirection = document.getElementById("arDirection");
+const arRoomList = document.getElementById("arRoomList");
 
 let currentFloor = null;
 let targetFloor = null;
@@ -29,6 +41,17 @@ let targetRoom = "";
 let navigating = false;
 let lastMotionAt = 0;
 let arrivedAnnounced = false;
+let navigatingAR = false;
+
+// floor coordinates for validation (calibration data)
+const floorCoordinates = {
+  1: { y: 7.7, z: 6.1 },
+  2: { y: 3.7, z: 8.7 },
+};
+
+// sensor sampling buffers
+const samplesY = [];
+const samplesZ = [];
 
 function initFormOptions() {
   roomData.forEach((room) => {
@@ -212,14 +235,17 @@ function setupPWA() {
 
 function bindEvents() {
   startBtn.addEventListener("click", startNavigation);
+  startArBtn.addEventListener("click", startARNavigation);
   permissionBtn.addEventListener("click", requestMotionPermissionFromButton);
 
   upBtn.addEventListener("click", () => {
     adjustFloorManually(1);
+    if (navigatingAR) renderARObject(currentFloor);
   });
 
   downBtn.addEventListener("click", () => {
     adjustFloorManually(-1);
+    if (navigatingAR) renderARObject(currentFloor);
   });
 
   window.addEventListener("devicemotion", onMotion);

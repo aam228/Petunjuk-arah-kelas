@@ -17,14 +17,15 @@
 		</header>
 
 		<section class="card">
-			<label for="roomSelect">Pilih ruang tujuan</label>
-			<select id="roomSelect"></select>
+				<label for="roomSelect">Pilih ruang tujuan</label>
+				<select id="roomSelect"></select>
 
-			<label for="startFloor">Pilih lantai awal</label>
-			<select id="startFloor"></select>
+				<label for="startFloor">Pilih lantai awal</label>
+				<select id="startFloor"></select>
 
-			<button id="startBtn" class="btn primary">Mulai Navigasi</button>
-			<button id="permissionBtn" class="btn secondary" hidden>Aktifkan Sensor Gerak</button>
+				<button id="startBtn" class="btn primary">Mulai Navigasi</button>
+				<button id="startArBtn" class="btn primary">Mulai Navigasi AR</button>
+				<button id="permissionBtn" class="btn secondary" hidden>Aktifkan Sensor Gerak</button>
 		</section>
 
 		<section class="card">
@@ -53,6 +54,19 @@
 			</div>
 		</section>
 	</main>
+
+	<!-- AR video and overlay (hidden until AR mode active) -->
+	<div id="arRoot" class="ar-root" hidden>
+		<video id="arVideo" class="ar-video" autoplay muted playsinline></video>
+		<div id="arOverlay" class="ar-overlay">
+			<p class="ar-note">Objek AR muncul setelah koordinat lantai tervalidasi.</p>
+			<div id="arObject" class="ar-card" hidden>
+				<div class="ar-floor">LANTAI <span id="arFloorNumber">-</span></div>
+				<div id="arDirection" class="ar-direction">-</div>
+				<ul id="arRoomList" class="ar-roomlist"></ul>
+			</div>
+		</div>
+	</div>
 
 	<script src="app.js" defer></script>
 </body>
