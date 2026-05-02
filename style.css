@@ -173,18 +173,33 @@ body {
     background: #000;
 }
 
-.ar-body .mobile-frame {
-    background: #000;
-}
-
-/* A-Frame Scene */
-#arScene {
-    position: absolute;
+/* A-Frame Scene - Full Screen */
+.ar-body #arScene {
+    position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     z-index: 0;
+}
+
+/* AR.js Video Element - Full Screen */
+.ar-body #arjs-video {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    z-index: 0;
+}
+
+/* Mobile Frame for AR - UI Overlay Container */
+.ar-body .mobile-frame {
+    background: transparent;
+    pointer-events: none;
+    position: relative;
+    z-index: 10;
 }
 
 /* AR Overlay */
@@ -203,6 +218,12 @@ body {
 
 .ar-overlay > * {
     pointer-events: auto;
+}
+
+/* Make sure camera is visible through overlay */
+.ar-overlay,
+.marker-guide {
+    background: transparent !important;
 }
 
 /* Top Status Panel */
@@ -243,6 +264,12 @@ body {
     justify-content: center;
     padding: 20px;
     gap: 12px;
+    background: transparent;
+    pointer-events: none;
+}
+
+.marker-guide > * {
+    pointer-events: auto;
 }
 
 .guide-text {
@@ -250,6 +277,10 @@ body {
     font-weight: 500;
     color: #94a3b8;
     text-align: center;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 8px 16px;
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
 }
 
 .marker-image {
