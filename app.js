@@ -34,6 +34,7 @@ const arObjectEl = document.getElementById("arObject");
 const arFloorNumber = document.getElementById("arFloorNumber");
 const arDirection = document.getElementById("arDirection");
 const arRoomList = document.getElementById("arRoomList");
+const startWebXRBtn = document.getElementById("startWebXRBtn");
 
 let currentFloor = null;
 let targetFloor = null;
@@ -169,6 +170,42 @@ function onMotion(event) {
 
   lastMotionAt = now;
   stepFloorEstimate("motion");
+
+  // collect Y and Z samples for floor validation
+  const yRaw = event.accelerationIncludingGravity?.y ?? 0;
+  const zRaw = event.accelerationIncludingGravity?.z ?? 0;
+  samplesY.push(yRaw);
+  samplesZ.push(zRaw);
+  if (samplesY.length > SENSOR_SAMPLE_COUNT) samplesY.shift();
+  if (samplesZ.length > SENSOR_SAMPLE_COUNT) samplesZ.shift();
+
+  if (samplesY.length >= SENSOR_SAMPLE_COUNT && samplesZ.length >= SENSOR_SAMPLE_COUNT) {
+    tryValidateFloorFromSamples();
+  }
+}
+
+function tryValidateFloorFromSamples() {
+  const avgY = samplesY.reduce((s, v) => s + v, 0) / samplesY.length;
+  const avgZ = samplesZ.reduce((s, v) => s + v, 0) / samplesZ.length;
+
+  for (const k of Object.keys(floorCoordinates)) {
+    const f = Number(k);
+    const coord = floorCoordinates[f];
+    const dy = Math.abs(avgY - coord.y);
+    const dz = Math.abs(avgZ - coord.z);
+    if (dy <= SENSOR_TOLERANCE.y && dz <= SENSOR_TOLERANCE.z) {
+      if (currentFloor !== f) {
+        currentFloor = f;
+        updateStatusUI();
+        renderARObject(currentFloor);
+        // if WebXR active, also place XR object
+        if (typeof placeXRForFloor === 'function') placeXRForFloor(currentFloor);
+      }
+      return;
+    }
+  }
+
+  if (navigatingAR) hideARObject("Mencari posisi lantai");
 }
 
 async function ensureMotionPermissionIfNeeded() {
@@ -223,6 +260,38 @@ async function requestMotionPermissionFromButton() {
   }
 }
 
+async function startARNavigation() {
+  const ok = await ensureMotionPermissionIfNeeded();
+  if (!ok) {
+    permissionBtn.hidden = false;
+    alert("Izin sensor gerak diperlukan untuk AR.");
+    return;
+  }
+
+  if (!navigating) {
+    startNavigation();
+  }
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    alert("Kamera tidak didukung di perangkat ini.");
+    return;
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
+    arVideo.srcObject = stream;
+    await arVideo.play();
+    arRoot.hidden = false;
+    navigatingAR = true;
+    samplesY.length = 0;
+    samplesZ.length = 0;
+    hideARObject("Mencari posisi lantai");
+  } catch (err) {
+    console.error("getUserMedia gagal:", err);
+    alert("Gagal mengaktifkan kamera: " + (err && err.message));
+  }
+}
+
 function setupPWA() {
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
@@ -236,6 +305,7 @@ function setupPWA() {
 function bindEvents() {
   startBtn.addEventListener("click", startNavigation);
   startArBtn.addEventListener("click", startARNavigation);
+  if (startWebXRBtn) startWebXRBtn.addEventListener('click', startWebXR);
   permissionBtn.addEventListener("click", requestMotionPermissionFromButton);
 
   upBtn.addEventListener("click", () => {
@@ -255,3 +325,160 @@ initFormOptions();
 bindEvents();
 updateStatusUI();
 setupPWA();
+
+/* --------- AR rendering + WebXR functions (three.js) ---------- */
+let xrSession = null;
+let renderer = null;
+let scene = null;
+let camera = null;
+let xrHitTestSource = null;
+let xrRefSpace = null;
+let xrPlacedObject = null;
+
+async function startWebXR() {
+  if (!navigator.xr) {
+    alert('WebXR not supported');
+    return;
+  }
+
+  const ok = await ensureMotionPermissionIfNeeded();
+  if (!ok) {
+    alert('Sensor permission required for AR.');
+    return;
+  }
+
+  try {
+    const supported = await navigator.xr.isSessionSupported('immersive-ar');
+    if (!supported) {
+      alert('WebXR immersive-ar not supported on this device/browser.');
+      return;
+    }
+  } catch (e) {
+    console.warn('isSessionSupported error', e);
+  }
+
+  try {
+    xrSession = await navigator.xr.requestSession('immersive-ar', { requiredFeatures: ['hit-test', 'local-floor'] });
+  } catch (err) {
+    console.error('requestSession failed', err);
+    alert('Cannot start WebXR session: ' + (err && err.message));
+    return;
+  }
+
+  // setup three
+  renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.xr.enabled = true;
+  renderer.domElement.classList.add('webxr-canvas');
+  document.body.appendChild(renderer.domElement);
+
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+
+  const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+  scene.add(light);
+
+  const geometry = new THREE.BoxGeometry(0.4, 0.4, 0.4);
+  const material = new THREE.MeshStandardMaterial({ color: 0x0f766e });
+  xrPlacedObject = new THREE.Mesh(geometry, material);
+  xrPlacedObject.visible = false;
+  scene.add(xrPlacedObject);
+
+  const gl = renderer.getContext();
+  await gl.makeXRCompatible();
+  xrSession.updateRenderState({ baseLayer: new XRWebGLLayer(xrSession, gl) });
+  xrRefSpace = await xrSession.requestReferenceSpace('local-floor');
+
+  try {
+    const viewerSpace = await xrSession.requestReferenceSpace('viewer');
+    xrHitTestSource = await xrSession.requestHitTestSource({ space: viewerSpace });
+  } catch (e) {
+    console.warn('No hit-test support', e);
+  }
+
+  renderer.xr.setSession(xrSession);
+  xrSession.requestAnimationFrame(onXRFrame);
+
+  xrSession.addEventListener('end', () => {
+    if (renderer && renderer.domElement) renderer.domElement.remove();
+    renderer = null;
+    xrSession = null;
+  });
+}
+
+function onXRFrame(time, frame) {
+  if (!frame) return;
+  const session = frame.session;
+  session.requestAnimationFrame(onXRFrame);
+
+  const pose = frame.getViewerPose(xrRefSpace);
+  if (!pose) return;
+
+  if (xrHitTestSource) {
+    const hits = frame.getHitTestResults(xrHitTestSource);
+    if (hits.length > 0) {
+      const hit = hits[0];
+      const hitPose = hit.getPose(xrRefSpace);
+      if (hitPose) {
+        xrPlacedObject.position.set(hitPose.transform.position.x, hitPose.transform.position.y, hitPose.transform.position.z);
+        xrPlacedObject.visible = true;
+      }
+    }
+  } else {
+    // fallback: place 2m in front of camera
+    const view = pose.views[0];
+    const mat = new THREE.Matrix4().fromArray(view.transform.matrix);
+    const pos = new THREE.Vector3().setFromMatrixPosition(mat);
+    const dir = new THREE.Vector3(0, 0, -1).applyMatrix4(new THREE.Matrix4().extractRotation(mat));
+    const fallbackPos = pos.clone().add(dir.multiplyScalar(2));
+    xrPlacedObject.position.copy(fallbackPos);
+    xrPlacedObject.visible = true;
+  }
+
+  renderer.render(scene, camera);
+}
+
+function placeXRForFloor(floor) {
+  if (!xrPlacedObject) return;
+  const color = floor === targetFloor ? 0x0fbf6e : 0x0f766e;
+  xrPlacedObject.material.color.setHex(color);
+  xrPlacedObject.visible = true;
+}
+
+function endWebXR() {
+  if (xrSession) xrSession.end();
+}
+
+function hideARObject(message) {
+  if (!arObjectEl) return;
+  arObjectEl.hidden = true;
+  arDirection.textContent = message || "-";
+  arFloorNumber.textContent = "-";
+  arRoomList.innerHTML = "";
+}
+
+function renderARObject(floor) {
+  if (!arObjectEl) return;
+  // only show overlay when AR mode (camera) active
+  if (!navigatingAR) return;
+
+  arObjectEl.hidden = false;
+  arFloorNumber.textContent = String(floor);
+
+  if (targetFloor === null) {
+    arDirection.textContent = "-";
+  } else if (floor === targetFloor) {
+    arDirection.textContent = "SAMPAI";
+  } else if (floor < targetFloor) {
+    arDirection.textContent = "NAIK";
+  } else {
+    arDirection.textContent = "TURUN";
+  }
+
+  const rooms = roomData.filter((r) => r.floor === floor).map((r) => r.name);
+  arRoomList.innerHTML = rooms.map((n) => `<li>${n}</li>`).join("");
+
+  // if WebXR active, update 3D object appearance
+  if (xrSession) placeXRForFloor(floor);
+}

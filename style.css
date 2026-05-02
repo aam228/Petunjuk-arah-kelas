@@ -118,6 +118,15 @@ body {
   font-size: 0.9rem;
 }
 
+/* WebXR canvas fullscreen */
+.webxr-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 50;
+}
+
 .header h1 {
   margin: 4px 0 8px;
   font-size: 1.4rem;
