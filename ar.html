@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AR Mode - Penunjuk Arah</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
+</head>
+<body class="ar-body">
+    <div class="mobile-frame">
+        <!-- A-Frame AR Scene -->
+        <a-scene
+            id="arScene"
+            embedded
+            arjs="sourceType: webcam; debugUIEnabled: false;"
+            vr-mode-ui="enabled: false"
+            renderer="logarithmicDepthBuffer: true; alpha: true; antialias: true;">
+        
+        <a-marker id="hiroMarker" preset="hiro">
+            <!-- Floor Number Display -->
+            <a-entity id="floor-number-object">
+                <!-- Background Circle -->
+                <a-circle 
+                    id="floorBackground"
+                    position="0 0.05 0" 
+                    rotation="-90 0 0" 
+                    radius="0.7" 
+                    color="#0f766e" 
+                    opacity="0.9">
+                </a-circle>
+                
+                <!-- Floor Number Text -->
+                <a-text 
+                    id="ar-floor-number"
+                    value="1" 
+                    position="0 0.08 0" 
+                    rotation="-90 0 0" 
+                    align="center" 
+                    color="#ffffff" 
+                    width="5"
+                    font="roboto">
+                </a-text>
+            </a-entity>
+        </a-marker>
+            
+            <a-entity camera></a-entity>
+        </a-scene>
+        
+        <!-- Overlay UI -->
+        <div class="ar-overlay">
+            <!-- Top Info Panel -->
+            <div class="ar-info-panel">
+                <div class="marker-status" id="markerStatus">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span id="markerStatusText">Marker belum terdeteksi</span>
+                </div>
+                <div class="ar-info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Lantai</span>
+                        <span class="info-value" id="currentFloorDisplay">1</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Tujuan</span>
+                        <span class="info-value" id="targetRoomDisplay">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Instruksi</span>
+                        <span class="info-value" id="instructionDisplay">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Sensor</span>
+                        <span class="info-value" id="sensorStatus">Off</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Marker Guide -->
+            <div class="marker-guide">
+                <div class="guide-content">
+                    <p class="guide-text">📷 Arahkan ke marker HIRO</p>
+                    <img src="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/hiro.png" 
+                         alt="HIRO Marker" 
+                         class="marker-image">
+                </div>
+            </div>
+            
+            <!-- Bottom Control Panel -->
+            <div class="ar-control-panel">
+                <button id="requestSensorBtn" class="btn-sensor" style="display: none;">
+                    🎯 Aktifkan Sensor
+                </button>
+                <div class="control-buttons">
+                    <button id="floorUpBtn" class="btn-control">⬆️ Naik</button>
+                    <button id="floorDownBtn" class="btn-control">⬇️ Turun</button>
+                </div>
+                <button id="resetBaselineBtn" class="btn-reset-baseline">🔄 Reset Baseline</button>
+                <button id="backBtn" class="btn-back">← Kembali</button>
+            </div>
+            
+            <!-- Sensor Debug Panel -->
+            <div class="ar-panel-debug" id="ar-panel-debug">
+                <strong>Sensor Debug</strong>
+                <div>X: <span id="debug-x">-</span></div>
+                <div>Y: <span id="debug-y">-</span></div>
+                <div>Z: <span id="debug-z">-</span></div>
+                <div>Base Y: <span id="debug-base-y">-</span></div>
+                <div>Base Z: <span id="debug-base-z">-</span></div>
+                <div>Delta Y: <span id="debug-delta-y">-</span></div>
+                <div>Delta Z: <span id="debug-delta-z">-</span></div>
+                <div>Status: <span id="debug-status">Menunggu sensor</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="ar.js"></script>
+</body>
+</html>

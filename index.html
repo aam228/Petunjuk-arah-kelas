@@ -1,76 +1,74 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
-	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-	<meta name="theme-color" content="#0f766e" />
-	<meta name="description" content="Estimasi perpindahan lantai kampus berbasis sensor gerak (PWA)." />
-	<link rel="manifest" href="manifest.json" />
-	<link rel="stylesheet" href="style.css" />
-	<title>Navigasi Lantai Kampus</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AR Penunjuk Arah Ruangan</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-	<main class="app-shell">
-		<header class="header">
-			<h1>Navigasi Lantai Kampus</h1>
-			<p>Estimasi perpindahan lantai berbasis sensor gerak. Hasil bersifat perkiraan.</p>
-		</header>
-
-		<section class="card">
-				<label for="roomSelect">Pilih ruang tujuan</label>
-				<select id="roomSelect"></select>
-
-				<label for="startFloor">Pilih lantai awal</label>
-				<select id="startFloor"></select>
-
-				<button id="startBtn" class="btn primary">Mulai Navigasi</button>
-				<button id="startArBtn" class="btn primary">Mulai Navigasi AR</button>
-				<button id="startWebXRBtn" class="btn primary">Masuk AR (WebXR)</button>
-				<button id="permissionBtn" class="btn secondary" hidden>Aktifkan Sensor Gerak</button>
-		</section>
-
-		<section class="card">
-			<h2>Status Navigasi</h2>
-			<div class="status-grid">
-				<p>Ruang tujuan:</p>
-				<strong id="targetRoom">-</strong>
-
-				<p>Lantai tujuan:</p>
-				<strong id="targetFloor">-</strong>
-
-				<p>Estimasi lantai saat ini:</p>
-				<strong id="currentFloor">-</strong>
-
-				<p>Status:</p>
-				<strong id="statusText">Belum mulai</strong>
-			</div>
-			<p id="hintText" class="hint">Pilih ruang dan lantai awal, lalu tekan Mulai Navigasi.</p>
-		</section>
-
-		<section class="card">
-			<h2>Validasi Manual</h2>
-			<div class="manual-actions">
-				<button id="upBtn" class="btn">Naik 1 Lantai</button>
-				<button id="downBtn" class="btn">Turun 1 Lantai</button>
-			</div>
-		</section>
-	</main>
-
-	<!-- AR video and overlay (hidden until AR mode active) -->
-	<div id="arRoot" class="ar-root" hidden>
-		<video id="arVideo" class="ar-video" autoplay muted playsinline></video>
-		<div id="arOverlay" class="ar-overlay">
-			<p class="ar-note">Objek AR muncul setelah koordinat lantai tervalidasi.</p>
-			<div id="arObject" class="ar-card" hidden>
-				<div class="ar-floor">LANTAI <span id="arFloorNumber">-</span></div>
-				<div id="arDirection" class="ar-direction">-</div>
-				<ul id="arRoomList" class="ar-roomlist"></ul>
-			</div>
-		</div>
-	</div>
-
-	<!-- three.js for WebXR -->
-	<script src="https://unpkg.com/three@0.155.0/build/three.min.js"></script>
-	<script src="app.js" defer></script>
+    <div class="mobile-frame">
+        <div class="setting-page">
+            <div class="header">
+                <h1>AR Penunjuk Arah</h1>
+                <p class="subtitle">Gedung Kampus</p>
+            </div>
+            
+            <div class="content">
+                <div class="form-group">
+                    <label for="roomSelect">Pilih Ruang Tujuan</label>
+                    <select id="roomSelect" class="input-select">
+                        <option value="">-- Pilih Ruangan --</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="startFloorSelect">Lantai Awal Anda</label>
+                    <select id="startFloorSelect" class="input-select">
+                        <option value="1">Lantai 1</option>
+                        <option value="2">Lantai 2</option>
+                        <option value="3">Lantai 3</option>
+                    </select>
+                </div>
+                
+                <div class="preview-box">
+                    <h3>Preview Navigasi</h3>
+                    <div class="preview-content">
+                        <div class="preview-item">
+                            <span class="preview-label">Ruang Tujuan:</span>
+                            <span class="preview-value" id="previewRoom">-</span>
+                        </div>
+                        <div class="preview-item">
+                            <span class="preview-label">Lantai Tujuan:</span>
+                            <span class="preview-value" id="previewTargetFloor">-</span>
+                        </div>
+                        <div class="preview-item">
+                            <span class="preview-label">Lantai Awal:</span>
+                            <span class="preview-value" id="previewStartFloor">-</span>
+                        </div>
+                        <div class="preview-item">
+                            <span class="preview-label">Instruksi:</span>
+                            <span class="preview-value" id="previewInstruction">-</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <button id="startARBtn" class="btn-primary" disabled>
+                    <span>📷</span> Mulai AR
+                </button>
+                
+                <div class="info-box">
+                    <div class="info-title">💡 Catatan Penting</div>
+                    <ul>
+                        <li>Izinkan akses kamera</li>
+                        <li>Siapkan marker HIRO</li>
+                        <li>Gunakan pencahayaan cukup</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="app.js"></script>
 </body>
 </html>
