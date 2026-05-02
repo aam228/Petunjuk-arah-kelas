@@ -198,10 +198,12 @@ function floorDown() {
 // ============================================================
 
 // Daftar marker per lantai
+// value di sini harus cocok dengan value di a-marker di ar.html
+// Pakai 3x3_HAMMING63: value 0,1,2 → lantai 1,2,3
 const floorMarkers = [
-    { id: "marker-floor-1", floor: 1 },
-    { id: "marker-floor-2", floor: 2 },
-    { id: "marker-floor-3", floor: 3 }
+    { id: "marker-floor-1", floor: 1, value: 0 },
+    { id: "marker-floor-2", floor: 2, value: 1 },
+    { id: "marker-floor-3", floor: 3, value: 2 }
 ];
 
 // Berapa marker yang sedang aktif terdeteksi

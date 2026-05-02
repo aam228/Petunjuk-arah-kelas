@@ -346,19 +346,21 @@
     </div>
 
     <script>
-        // URL gambar barcode marker AR.js 3x3 per value
-        // Sumber resmi: AR.js barcode marker images
+        // URL gambar barcode marker dari repo resmi artoolkit
+        // Repo: nicolocarpignoli/artoolkit-barcode-markers-collection
+        // Folder: 3x3_hamming_6_3 (Hamming distance 3, lebih mudah dideteksi)
+        // value 0 → lantai 1, value 1 → lantai 2, value 2 → lantai 3
         const markerImages = {
-            1: "https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/barcode/3x3/1.png",
-            2: "https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/barcode/3x3/2.png",
-            3: "https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/barcode/3x3/3.png"
+            1: "https://raw.githubusercontent.com/nicolocarpignoli/artoolkit-barcode-markers-collection/master/3x3_hamming_6_3/0.png",
+            2: "https://raw.githubusercontent.com/nicolocarpignoli/artoolkit-barcode-markers-collection/master/3x3_hamming_6_3/1.png",
+            3: "https://raw.githubusercontent.com/nicolocarpignoli/artoolkit-barcode-markers-collection/master/3x3_hamming_6_3/2.png"
         };
 
         // Fallback: jika CDN tidak tersedia, gunakan SVG inline
         const markerSVG = {
-            1: generateBarcodeSVG(1),
-            2: generateBarcodeSVG(2),
-            3: generateBarcodeSVG(3)
+            1: generateBarcodeSVG(0),
+            2: generateBarcodeSVG(1),
+            3: generateBarcodeSVG(2)
         };
 
         // Warna per lantai
@@ -370,35 +372,21 @@
 
         let currentFloor = 1;
 
-        // Generate SVG barcode marker 3x3 sebagai fallback
-        // Pola berdasarkan AR.js 3x3 matrix code specification
+        // Generate SVG barcode marker sebagai fallback jika CDN gagal
+        // Pola ini adalah representasi visual sederhana, bukan pola AR.js yang tepat.
+        // Jika CDN gagal, user sebaiknya download gambar marker secara manual.
         function generateBarcodeSVG(value) {
-            // Pola inner 3x3 untuk value 1, 2, 3
-            // AR.js 3x3 barcode: border selalu hitam, inner 3x3 = binary dari value
-            // value 1 = 001 = [0,0,1] → row patterns
-            // value 2 = 010 = [0,1,0]
-            // value 3 = 011 = [0,1,1]
+            // Pola visual sederhana per value untuk identifikasi visual
+            // Bukan pola AR.js yang sebenarnya — hanya untuk fallback display
             const patterns = {
-                1: [
-                    [0,0,0],
-                    [0,0,0],
-                    [0,0,1]
-                ],
-                2: [
-                    [0,0,0],
-                    [0,0,1],
-                    [0,0,0]
-                ],
-                3: [
-                    [0,0,0],
-                    [0,0,1],
-                    [0,0,1]
-                ]
+                0: [[1,0,1],[0,0,0],[1,0,1]],  // lantai 1
+                1: [[1,1,0],[0,0,1],[0,1,1]],  // lantai 2
+                2: [[0,1,1],[1,0,0],[1,1,0]]   // lantai 3
             };
 
-            const p = patterns[value] || patterns[1];
+            const p = patterns[value] || patterns[0];
             const size = 200;
-            const border = 20;   // lebar border hitam
+            const border = 24;
             const inner = size - border * 2;
             const cell = inner / 3;
 
@@ -413,14 +401,9 @@
                 }
             }
 
-            return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-                <rect width="${size}" height="${size}" fill="white"/>
-                <rect x="0" y="0" width="${size}" height="${border}" fill="black"/>
-                <rect x="0" y="${size - border}" width="${size}" height="${border}" fill="black"/>
-                <rect x="0" y="0" width="${border}" height="${size}" fill="black"/>
-                <rect x="${size - border}" y="0" width="${border}" height="${size}" fill="black"/>
-                ${cells}
-            </svg>`;
+            // Encode SVG untuk data URL
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" fill="white"/><rect x="0" y="0" width="${size}" height="${border}" fill="black"/><rect x="0" y="${size-border}" width="${size}" height="${border}" fill="black"/><rect x="0" y="0" width="${border}" height="${size}" fill="black"/><rect x="${size-border}" y="0" width="${border}" height="${size}" fill="black"/>${cells}</svg>`;
+            return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
         }
 
         function setFloor(floor) {
@@ -443,9 +426,13 @@
             img.src = markerImages[floor];
 
             // Update caption
+            const captions = {
+                1: "Marker Lantai 1 — 3x3 HAMMING63 value 0",
+                2: "Marker Lantai 2 — 3x3 HAMMING63 value 1",
+                3: "Marker Lantai 3 — 3x3 HAMMING63 value 2"
+            };
             document.getElementById('markerCaption').innerHTML =
-                `Marker Lantai ${floor} — Barcode 3x3 value ${floor}<br>
-                 Tempelkan di dinding atau meja pada lantai ini`;
+                `${captions[floor]}<br>Tempelkan di dinding atau meja pada lantai ini`;
 
             // Update tab active state
             document.querySelectorAll('.floor-tab').forEach(tab => {

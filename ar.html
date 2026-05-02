@@ -9,78 +9,70 @@
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
 </head>
 <body class="ar-body">
-    <!-- A-Frame AR Scene (Full Screen, Outside Mobile Frame) -->
-    <!-- detectionMode + matrixCodeType diperlukan untuk barcode marker 3x3 -->
     <a-scene
         id="arScene"
         embedded
-        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3_HAMMING63;"
         vr-mode-ui="enabled: false"
         renderer="logarithmicDepthBuffer: true; alpha: true; antialias: true;">
 
-        <!-- Marker Lantai 1 — barcode value 1 — teal -->
-        <a-marker id="marker-floor-1" type="barcode" value="1">
-            <a-entity class="floor-ar-object">
-                <a-circle
-                    position="0 0.05 0"
-                    rotation="-90 0 0"
-                    radius="0.7"
-                    color="#0f766e"
-                    opacity="0.9">
-                </a-circle>
-                <a-text
-                    value="1"
-                    position="0 0.08 0"
-                    rotation="-90 0 0"
-                    align="center"
-                    color="#ffffff"
-                    width="5"
-                    font="roboto">
-                </a-text>
+        <!-- =====================================================
+             ASSETS — taruh file .glb kamu di assets/models/
+             Ganti nama file sesuai file yang kamu punya.
+             ===================================================== -->
+        <a-assets timeout="10000">
+            <a-asset-item id="floorModel" src="assets/models/number.glb"></a-asset-item>
+        </a-assets>
+
+        <!--
+            Marker di tembok → kamera horizontal menghadap marker.
+            Sistem koordinat AR.js saat marker di tembok:
+              - sumbu Y mengarah ke atas (dari marker ke langit-langit)
+              - sumbu Z mengarah keluar dari tembok (ke arah kamera)
+            Maka model cukup digeser ke Z positif agar "keluar" dari tembok,
+            tanpa perlu rotasi tambahan — model sudah menghadap kamera.
+            
+            position="0 0 1"  → model muncul 1 unit di depan marker (ke arah kamera)
+            scale="2 2 2"     → diperbesar
+            rotation="0 0 0"  → tidak perlu dirotasi untuk marker di tembok
+        -->
+
+        <!-- Marker Lantai 1 — barcode 3x3_HAMMING63 value 0 -->
+        <a-marker id="marker-floor-1" type="barcode" value="0">
+            <a-entity id="floor-model-wrapper-1">
+                <a-gltf-model
+                    id="floorModelEntity1"
+                    src="#floorModel"
+                    position="0 0 1"
+                    rotation="0 0 0"
+                    scale="2 2 2">
+                </a-gltf-model>
             </a-entity>
         </a-marker>
 
-        <!-- Marker Lantai 2 — barcode value 2 — biru -->
-        <a-marker id="marker-floor-2" type="barcode" value="2">
-            <a-entity class="floor-ar-object">
-                <a-circle
-                    position="0 0.05 0"
-                    rotation="-90 0 0"
-                    radius="0.7"
-                    color="#2563eb"
-                    opacity="0.9">
-                </a-circle>
-                <a-text
-                    value="2"
-                    position="0 0.08 0"
-                    rotation="-90 0 0"
-                    align="center"
-                    color="#ffffff"
-                    width="5"
-                    font="roboto">
-                </a-text>
+        <!-- Marker Lantai 2 — barcode 3x3_HAMMING63 value 1 -->
+        <a-marker id="marker-floor-2" type="barcode" value="1">
+            <a-entity id="floor-model-wrapper-2">
+                <a-gltf-model
+                    id="floorModelEntity2"
+                    src="#floorModel"
+                    position="0 0 1"
+                    rotation="0 0 0"
+                    scale="2 2 2">
+                </a-gltf-model>
             </a-entity>
         </a-marker>
 
-        <!-- Marker Lantai 3 — barcode value 3 — ungu -->
-        <a-marker id="marker-floor-3" type="barcode" value="3">
-            <a-entity class="floor-ar-object">
-                <a-circle
-                    position="0 0.05 0"
-                    rotation="-90 0 0"
-                    radius="0.7"
-                    color="#7c3aed"
-                    opacity="0.9">
-                </a-circle>
-                <a-text
-                    value="3"
-                    position="0 0.08 0"
-                    rotation="-90 0 0"
-                    align="center"
-                    color="#ffffff"
-                    width="5"
-                    font="roboto">
-                </a-text>
+        <!-- Marker Lantai 3 — barcode 3x3_HAMMING63 value 2 -->
+        <a-marker id="marker-floor-3" type="barcode" value="2">
+            <a-entity id="floor-model-wrapper-3">
+                <a-gltf-model
+                    id="floorModelEntity3"
+                    src="#floorModel"
+                    position="0 0 1"
+                    rotation="0 0 0"
+                    scale="2 2 2">
+                </a-gltf-model>
             </a-entity>
         </a-marker>
 
