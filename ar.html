@@ -10,47 +10,87 @@
 </head>
 <body class="ar-body">
     <!-- A-Frame AR Scene (Full Screen, Outside Mobile Frame) -->
+    <!-- detectionMode + matrixCodeType diperlukan untuk barcode marker 3x3 -->
     <a-scene
         id="arScene"
         embedded
-        arjs="sourceType: webcam; debugUIEnabled: false;"
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
         vr-mode-ui="enabled: false"
         renderer="logarithmicDepthBuffer: true; alpha: true; antialias: true;">
-    
-    <a-marker id="hiroMarker" preset="hiro">
-        <!-- Floor Number Display -->
-        <a-entity id="floor-number-object">
-            <!-- Background Circle -->
-            <a-circle 
-                id="floorBackground"
-                position="0 0.05 0" 
-                rotation="-90 0 0" 
-                radius="0.7" 
-                color="#0f766e" 
-                opacity="0.9">
-            </a-circle>
-            
-            <!-- Floor Number Text -->
-            <a-text 
-                id="ar-floor-number"
-                value="1" 
-                position="0 0.08 0" 
-                rotation="-90 0 0" 
-                align="center" 
-                color="#ffffff" 
-                width="5"
-                font="roboto">
-            </a-text>
-        </a-entity>
-    </a-marker>
-        
+
+        <!-- Marker Lantai 1 — barcode value 1 — teal -->
+        <a-marker id="marker-floor-1" type="barcode" value="1">
+            <a-entity class="floor-ar-object">
+                <a-circle
+                    position="0 0.05 0"
+                    rotation="-90 0 0"
+                    radius="0.7"
+                    color="#0f766e"
+                    opacity="0.9">
+                </a-circle>
+                <a-text
+                    value="1"
+                    position="0 0.08 0"
+                    rotation="-90 0 0"
+                    align="center"
+                    color="#ffffff"
+                    width="5"
+                    font="roboto">
+                </a-text>
+            </a-entity>
+        </a-marker>
+
+        <!-- Marker Lantai 2 — barcode value 2 — biru -->
+        <a-marker id="marker-floor-2" type="barcode" value="2">
+            <a-entity class="floor-ar-object">
+                <a-circle
+                    position="0 0.05 0"
+                    rotation="-90 0 0"
+                    radius="0.7"
+                    color="#2563eb"
+                    opacity="0.9">
+                </a-circle>
+                <a-text
+                    value="2"
+                    position="0 0.08 0"
+                    rotation="-90 0 0"
+                    align="center"
+                    color="#ffffff"
+                    width="5"
+                    font="roboto">
+                </a-text>
+            </a-entity>
+        </a-marker>
+
+        <!-- Marker Lantai 3 — barcode value 3 — ungu -->
+        <a-marker id="marker-floor-3" type="barcode" value="3">
+            <a-entity class="floor-ar-object">
+                <a-circle
+                    position="0 0.05 0"
+                    rotation="-90 0 0"
+                    radius="0.7"
+                    color="#7c3aed"
+                    opacity="0.9">
+                </a-circle>
+                <a-text
+                    value="3"
+                    position="0 0.08 0"
+                    rotation="-90 0 0"
+                    align="center"
+                    color="#ffffff"
+                    width="5"
+                    font="roboto">
+                </a-text>
+            </a-entity>
+        </a-marker>
+
         <a-entity camera></a-entity>
     </a-scene>
-    
+
     <!-- Mobile Frame for UI Overlay Only -->
     <div class="mobile-frame">
-        <!-- Overlay UI -->
         <div class="ar-overlay">
+
             <!-- Top Status Panel -->
             <div class="ar-status-panel">
                 <div class="status-row">
@@ -59,7 +99,7 @@
                 </div>
                 <div class="status-row">
                     <span class="status-label">Lantai</span>
-                    <span class="status-value" id="currentFloorDisplay">1</span>
+                    <span class="status-value" id="currentFloorDisplay">-</span>
                 </div>
                 <div class="status-row">
                     <span class="status-label">Tujuan</span>
@@ -70,27 +110,27 @@
                     <span class="status-value" id="sensorStatus">Tidak Aktif</span>
                 </div>
             </div>
-            
-            <!-- Marker Guide (Hidden when detected) -->
+
+            <!-- Marker Guide (hidden when any marker detected) -->
             <div class="marker-guide" id="markerGuide">
-                <p class="guide-text">Arahkan kamera ke marker HIRO</p>
-                <img src="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/hiro.png" 
-                     alt="HIRO Marker" 
-                     class="marker-image">
+                <p class="guide-text">Arahkan kamera ke marker lantai</p>
+                <a href="marker-lantai.html" target="_blank" class="guide-link">Lihat marker</a>
             </div>
-            
-            <!-- Sensor Debug Panel (Small) -->
+
+            <!-- Sensor Debug Panel -->
             <div class="sensor-debug" id="sensorDebug">
                 <div class="debug-row">X: <span id="debug-x">-</span></div>
                 <div class="debug-row">Y: <span id="debug-y">-</span></div>
                 <div class="debug-row">Z: <span id="debug-z">-</span></div>
-                <div class="debug-row">ΔY: <span id="debug-delta-y">-</span></div>
-                <div class="debug-row">ΔZ: <span id="debug-delta-z">-</span></div>
-                <div class="debug-status"><span id="debug-status">Menunggu</span></div>
+                <div class="debug-row">Mag: <span id="debug-magnitude">-</span></div>
+                <div class="debug-row">Mv: <span id="debug-moving-dur">-</span></div>
+                <div class="debug-row">St: <span id="debug-stable-dur">-</span></div>
+                <div class="debug-status"><span id="debug-motion-state">Menunggu</span></div>
             </div>
-            
+
             <!-- Bottom Control Panel -->
             <div class="ar-control-panel">
+                <p class="sensor-hint">Scan marker lantai untuk menentukan posisi. Tombol manual untuk koreksi.</p>
                 <button id="requestSensorBtn" class="btn-sensor" style="display: none;">Aktifkan Sensor</button>
                 <div class="control-buttons">
                     <button id="floorUpBtn" class="btn-control">Naik 1 Lantai</button>
@@ -99,9 +139,10 @@
                 <button id="resetBaselineBtn" class="btn-reset">Kalibrasi Ulang Sensor</button>
                 <button id="backBtn" class="btn-back">Kembali</button>
             </div>
+
         </div>
     </div>
-    
+
     <script src="ar.js"></script>
 </body>
 </html>
