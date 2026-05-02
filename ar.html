@@ -50,66 +50,53 @@
         
         <!-- Overlay UI -->
         <div class="ar-overlay">
-            <!-- Top Info Panel -->
-            <div class="ar-info-panel">
-                <div class="marker-status" id="markerStatus">
-                    <span class="status-dot" id="statusDot"></span>
-                    <span id="markerStatusText">Marker belum terdeteksi</span>
+            <!-- Top Status Panel -->
+            <div class="ar-status-panel">
+                <div class="status-row">
+                    <span class="status-label">Marker</span>
+                    <span class="status-value" id="markerStatusText">Belum Terdeteksi</span>
                 </div>
-                <div class="ar-info-grid">
-                    <div class="info-item">
-                        <span class="info-label">Lantai</span>
-                        <span class="info-value" id="currentFloorDisplay">1</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Tujuan</span>
-                        <span class="info-value" id="targetRoomDisplay">-</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Instruksi</span>
-                        <span class="info-value" id="instructionDisplay">-</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Sensor</span>
-                        <span class="info-value" id="sensorStatus">Off</span>
-                    </div>
+                <div class="status-row">
+                    <span class="status-label">Lantai</span>
+                    <span class="status-value" id="currentFloorDisplay">1</span>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">Tujuan</span>
+                    <span class="status-value" id="targetRoomDisplay">-</span>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">Sensor</span>
+                    <span class="status-value" id="sensorStatus">Tidak Aktif</span>
                 </div>
             </div>
             
-            <!-- Marker Guide -->
-            <div class="marker-guide">
-                <div class="guide-content">
-                    <p class="guide-text">📷 Arahkan ke marker HIRO</p>
-                    <img src="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/hiro.png" 
-                         alt="HIRO Marker" 
-                         class="marker-image">
-                </div>
+            <!-- Marker Guide (Hidden when detected) -->
+            <div class="marker-guide" id="markerGuide">
+                <p class="guide-text">Arahkan kamera ke marker HIRO</p>
+                <img src="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/hiro.png" 
+                     alt="HIRO Marker" 
+                     class="marker-image">
+            </div>
+            
+            <!-- Sensor Debug Panel (Small) -->
+            <div class="sensor-debug" id="sensorDebug">
+                <div class="debug-row">X: <span id="debug-x">-</span></div>
+                <div class="debug-row">Y: <span id="debug-y">-</span></div>
+                <div class="debug-row">Z: <span id="debug-z">-</span></div>
+                <div class="debug-row">ΔY: <span id="debug-delta-y">-</span></div>
+                <div class="debug-row">ΔZ: <span id="debug-delta-z">-</span></div>
+                <div class="debug-status"><span id="debug-status">Menunggu</span></div>
             </div>
             
             <!-- Bottom Control Panel -->
             <div class="ar-control-panel">
-                <button id="requestSensorBtn" class="btn-sensor" style="display: none;">
-                    🎯 Aktifkan Sensor
-                </button>
+                <button id="requestSensorBtn" class="btn-sensor" style="display: none;">Aktifkan Sensor</button>
                 <div class="control-buttons">
-                    <button id="floorUpBtn" class="btn-control">⬆️ Naik</button>
-                    <button id="floorDownBtn" class="btn-control">⬇️ Turun</button>
+                    <button id="floorUpBtn" class="btn-control">Naik 1 Lantai</button>
+                    <button id="floorDownBtn" class="btn-control">Turun 1 Lantai</button>
                 </div>
-                <button id="resetBaselineBtn" class="btn-reset-baseline">🔄 Reset Baseline</button>
-                <button id="backBtn" class="btn-back">← Kembali</button>
-            </div>
-            
-            <!-- Sensor Debug Panel -->
-            <div class="ar-panel-debug" id="ar-panel-debug">
-                <strong>Sensor Debug</strong>
-                <div>X: <span id="debug-x">-</span></div>
-                <div>Y: <span id="debug-y">-</span></div>
-                <div>Z: <span id="debug-z">-</span></div>
-                <div>Base Y: <span id="debug-base-y">-</span></div>
-                <div>Base Z: <span id="debug-base-z">-</span></div>
-                <div>Delta Y: <span id="debug-delta-y">-</span></div>
-                <div>Delta Z: <span id="debug-delta-z">-</span></div>
-                <div>Status: <span id="debug-status">Menunggu sensor</span></div>
+                <button id="resetBaselineBtn" class="btn-reset">Kalibrasi Ulang Sensor</button>
+                <button id="backBtn" class="btn-back">Kembali</button>
             </div>
         </div>
     </div>

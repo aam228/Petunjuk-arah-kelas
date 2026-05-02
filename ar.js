@@ -89,17 +89,11 @@ function updateARFloorNumber() {
 
 // Update AR Content (includes overlay UI and AR object)
 function updateARContent() {
-    const instruction = getInstruction(currentFloor, targetFloor);
-    const roomsOnFloor = getRoomsOnFloor(currentFloor);
-    const roomListText = roomsOnFloor.map(r => r.name).join(', ');
-    
     // Update AR Floor Number Object
     updateARFloorNumber();
     
     // Update Overlay UI
-    document.getElementById('currentFloorDisplay').textContent = `Lantai ${currentFloor}`;
-    document.getElementById('targetRoomDisplay').textContent = targetRoomName;
-    document.getElementById('instructionDisplay').textContent = instruction;
+    updateOverlayInfo();
     
     // Save current floor to localStorage
     localStorage.setItem('currentFloor', currentFloor);
@@ -109,9 +103,7 @@ function updateARContent() {
     
     console.log('AR Content updated:', {
         currentFloor,
-        targetFloor,
-        instruction,
-        roomsOnFloor: roomListText
+        targetFloor
     });
 }
 
@@ -167,12 +159,17 @@ function floorDown() {
 // Marker Events (Marker hanya untuk tempat munculnya objek AR, tidak mengubah lantai)
 function setupMarkerEvents() {
     const marker = document.getElementById('hiroMarker');
+    const markerGuide = document.getElementById('markerGuide');
     
     if (marker) {
         marker.addEventListener('markerFound', function() {
             markerDetected = true;
-            document.getElementById('statusDot').classList.add('active');
-            document.getElementById('markerStatusText').textContent = 'Marker terdeteksi';
+            document.getElementById('markerStatusText').textContent = 'Terdeteksi';
+            
+            // Hide marker guide when detected
+            if (markerGuide) {
+                markerGuide.style.display = 'none';
+            }
             
             // Update AR floor number when marker is found
             updateARFloorNumber();
@@ -182,8 +179,13 @@ function setupMarkerEvents() {
         
         marker.addEventListener('markerLost', function() {
             markerDetected = false;
-            document.getElementById('statusDot').classList.remove('active');
-            document.getElementById('markerStatusText').textContent = 'Marker belum terdeteksi';
+            document.getElementById('markerStatusText').textContent = 'Belum Terdeteksi';
+            
+            // Show marker guide when lost
+            if (markerGuide) {
+                markerGuide.style.display = 'flex';
+            }
+            
             console.log('Marker lost - AR object hidden');
         });
     }
@@ -194,7 +196,7 @@ function setupMotionSensor() {
     // Check if DeviceMotionEvent exists
     if (!window.DeviceMotionEvent) {
         console.log('DeviceMotionEvent not supported');
-        document.getElementById('sensorStatus').textContent = 'N/A';
+        document.getElementById('sensorStatus').textContent = 'Tidak Tersedia';
         return;
     }
     
@@ -213,7 +215,7 @@ function setupMotionSensor() {
                         console.log('Motion sensor permission granted');
                     } else {
                         console.log('Motion sensor permission denied');
-                        document.getElementById('sensorStatus').textContent = 'Denied';
+                        document.getElementById('sensorStatus').textContent = 'Ditolak';
                     }
                 })
                 .catch(console.error);
@@ -227,7 +229,7 @@ function setupMotionSensor() {
 function activateMotionSensor() {
     window.addEventListener('devicemotion', handleMotion);
     sensorActive = true;
-    document.getElementById('sensorStatus').textContent = 'On';
+    document.getElementById('sensorStatus').textContent = 'Aktif';
     console.log('Motion sensor activated');
 }
 
@@ -355,11 +357,17 @@ function updateSensorDebug({ x, y, z, baseY, baseZ, deltaY, deltaZ, status }) {
     setText("debug-x", x);
     setText("debug-y", y);
     setText("debug-z", z);
-    setText("debug-base-y", baseY);
-    setText("debug-base-z", baseZ);
     setText("debug-delta-y", deltaY);
     setText("debug-delta-z", deltaZ);
     setText("debug-status", status || "-");
+}
+
+// Update Overlay Info
+function updateOverlayInfo() {
+    const instruction = getInstruction(currentFloor, targetFloor);
+    
+    document.getElementById('currentFloorDisplay').textContent = currentFloor;
+    document.getElementById('targetRoomDisplay').textContent = targetRoomName;
 }
 
 // Initialize

@@ -10,20 +10,20 @@
     <div class="mobile-frame">
         <div class="setting-page">
             <div class="header">
-                <h1>AR Penunjuk Arah</h1>
+                <h1>AR Penunjuk Arah Ruangan</h1>
                 <p class="subtitle">Gedung Kampus</p>
             </div>
             
             <div class="content">
                 <div class="form-group">
-                    <label for="roomSelect">Pilih Ruang Tujuan</label>
+                    <label for="roomSelect">Ruang Tujuan</label>
                     <select id="roomSelect" class="input-select">
-                        <option value="">-- Pilih Ruangan --</option>
+                        <option value="">Pilih Ruangan</option>
                     </select>
                 </div>
                 
                 <div class="form-group">
-                    <label for="startFloorSelect">Lantai Awal Anda</label>
+                    <label for="startFloorSelect">Lantai Awal</label>
                     <select id="startFloorSelect" class="input-select">
                         <option value="1">Lantai 1</option>
                         <option value="2">Lantai 2</option>
@@ -32,38 +32,28 @@
                 </div>
                 
                 <div class="preview-box">
-                    <h3>Preview Navigasi</h3>
-                    <div class="preview-content">
-                        <div class="preview-item">
-                            <span class="preview-label">Ruang Tujuan:</span>
-                            <span class="preview-value" id="previewRoom">-</span>
-                        </div>
-                        <div class="preview-item">
-                            <span class="preview-label">Lantai Tujuan:</span>
-                            <span class="preview-value" id="previewTargetFloor">-</span>
-                        </div>
-                        <div class="preview-item">
-                            <span class="preview-label">Lantai Awal:</span>
-                            <span class="preview-value" id="previewStartFloor">-</span>
-                        </div>
-                        <div class="preview-item">
-                            <span class="preview-label">Instruksi:</span>
-                            <span class="preview-value" id="previewInstruction">-</span>
-                        </div>
+                    <div class="preview-item">
+                        <span class="preview-label">Tujuan</span>
+                        <span class="preview-value" id="previewRoom">-</span>
+                    </div>
+                    <div class="preview-item">
+                        <span class="preview-label">Lantai Tujuan</span>
+                        <span class="preview-value" id="previewTargetFloor">-</span>
+                    </div>
+                    <div class="preview-item">
+                        <span class="preview-label">Lantai Awal</span>
+                        <span class="preview-value" id="previewStartFloor">-</span>
+                    </div>
+                    <div class="preview-item">
+                        <span class="preview-label">Instruksi</span>
+                        <span class="preview-value" id="previewInstruction">-</span>
                     </div>
                 </div>
                 
-                <button id="startARBtn" class="btn-primary" disabled>
-                    <span>📷</span> Mulai AR
-                </button>
+                <button id="startARBtn" class="btn-primary" disabled>Mulai AR</button>
                 
-                <div class="info-box">
-                    <div class="info-title">💡 Catatan Penting</div>
-                    <ul>
-                        <li>Izinkan akses kamera</li>
-                        <li>Siapkan marker HIRO</li>
-                        <li>Gunakan pencahayaan cukup</li>
-                    </ul>
+                <div class="info-note">
+                    <p>Pastikan marker HIRO tersedia dan sensor gerak aktif</p>
                 </div>
             </div>
         </div>
