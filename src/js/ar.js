@@ -102,7 +102,7 @@ function checkData() {
 
     if (!selectedRoomId || !targetRoomNameStored || !targetFloorStored || !startFloorStored) {
         console.log('Data tidak lengkap, redirect ke index.html');
-        window.location.href = 'index.html';
+        window.location.href = '../../index.html';
         return false;
     }
 
@@ -480,12 +480,32 @@ function updateSensorDebug({ x, y, z, magnitude, state, stableDuration, movingDu
 // NAVIGATION
 // ============================================================
 function goBack() {
-    window.location.href = 'index.html';
+    window.location.href = '../../index.html';
 }
 
 // ============================================================
 // INIT
 // ============================================================
+function init() {
+    // Setup all components
+    setupMarkerEvents();
+    setupMotionSensor();
+    setupButtonHandlers();
+}
+
+function setupButtonHandlers() {
+    // Manual floor controls
+    const floorUpBtn = document.getElementById('floorUpBtn');
+    const floorDownBtn = document.getElementById('floorDownBtn');
+    const resetBtn = document.getElementById('resetBaselineBtn');
+    const backBtn = document.getElementById('backBtn');
+
+    if (floorUpBtn) floorUpBtn.addEventListener('click', floorUp);
+    if (floorDownBtn) floorDownBtn.addEventListener('click', floorDown);
+    if (resetBtn) resetBtn.addEventListener('click', resetBaseline);
+    if (backBtn) backBtn.addEventListener('click', goBack);
+}
+
 window.addEventListener('DOMContentLoaded', function() {
     console.log('ar.js loaded');
     if (!checkData()) return;
@@ -497,18 +517,3 @@ window.addEventListener('DOMContentLoaded', function() {
         scene.addEventListener('loaded', init);
     }
 });
-
-function init() {
-    console.log('A-Frame scene loaded, initializing...');
-
-    setupMarkerEvents();
-    updateARContent();
-    setupMotionSensor();
-
-    document.getElementById('floorUpBtn').addEventListener('click', floorUp);
-    document.getElementById('floorDownBtn').addEventListener('click', floorDown);
-    document.getElementById('resetBaselineBtn').addEventListener('click', resetBaseline);
-    document.getElementById('backBtn').addEventListener('click', goBack);
-
-    console.log('AR page initialized');
-}

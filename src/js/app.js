@@ -99,7 +99,7 @@ function startAR() {
     });
     
     // Redirect to AR page
-    window.location.href = 'ar.html';
+    window.location.href = 'src/pages/ar.html';
 }
 
 // Event Listeners

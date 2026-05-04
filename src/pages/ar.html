@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AR Mode - Penunjuk Arah</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../../src/css/style.css">
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
 </head>
@@ -21,7 +21,7 @@
              Ganti nama file sesuai file yang kamu punya.
              ===================================================== -->
         <a-assets timeout="10000">
-            <a-asset-item id="floorModel" src="assets/models/number.glb"></a-asset-item>
+            <a-asset-item id="floorModel" src="../../assets/models/number.glb"></a-asset-item>
         </a-assets>
 
         <!--
@@ -43,7 +43,7 @@
                 <a-gltf-model
                     id="floorModelEntity1"
                     src="#floorModel"
-                    position="0 0 1"
+                    position="0 0 0.3"
                     rotation="0 0 0"
                     scale="2 2 2">
                 </a-gltf-model>
@@ -56,7 +56,7 @@
                 <a-gltf-model
                     id="floorModelEntity2"
                     src="#floorModel"
-                    position="0 0 1"
+                    position="0 0 0.3"
                     rotation="0 0 0"
                     scale="2 2 2">
                 </a-gltf-model>
@@ -69,7 +69,7 @@
                 <a-gltf-model
                     id="floorModelEntity3"
                     src="#floorModel"
-                    position="0 0 1"
+                    position="0 0 0.3"
                     rotation="0 0 0"
                     scale="2 2 2">
                 </a-gltf-model>
@@ -135,6 +135,6 @@
         </div>
     </div>
 
-    <script src="ar.js"></script>
+    <script src="../js/ar.js"></script>
 </body>
 </html>
