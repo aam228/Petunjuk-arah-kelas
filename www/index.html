@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2196F3">
+    <meta name="description" content="Aplikasi Augmented Reality sederhana untuk navigasi ruangan di gedung kampus menggunakan marker-based AR.">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%232196F3' width='100' height='100'/><text x='50' y='50' font-size='60' fill='white' text-anchor='middle' dy='.3em'>AR</text></svg>">
+    <link rel="stylesheet" href="src/css/style.css">
+</head>
+<body>
+    <div class="mobile-frame">
+        <div class="setting-page">
+            <div class="header">
+                <h1>AR Penunjuk Arah Ruangan</h1>
+                <p class="subtitle">Gedung Kampus</p>
+            </div>
+            
+            <div class="content">
+                <div class="form-group">
+                    <label for="roomSelect">Ruang Tujuan</label>
+                    <select id="roomSelect" class="input-select">
+                        <option value="">Pilih Ruangan</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="startFloorSelect">Lantai Awal</label>
+                    <select id="startFloorSelect" class="input-select">
+                        <option value="1">Lantai 1</option>
+                        <option value="2">Lantai 2</option>
+                        <option value="3">Lantai 3</option>
+                    </select>
+                </div>
+                
+                <div class="preview-box">
+                    <div class="preview-item">
+                        <span class="preview-label">Tujuan</span>
+                        <span class="preview-value" id="previewRoom">-</span>
+                    </div>
+                    <div class="preview-item">
+                        <span class="preview-label">Lantai Tujuan</span>
+                        <span class="preview-value" id="previewTargetFloor">-</span>
+                    </div>
+                    <div class="preview-item">
+                        <span class="preview-label">Lantai Awal</span>
+                        <span class="preview-value" id="previewStartFloor">-</span>
+                    </div>
+                    <div class="preview-item">
+                        <span class="preview-label">Instruksi</span>
+                        <span class="preview-value" id="previewInstruction">-</span>
+                    </div>
+                </div>
+                
+                <button id="startARBtn" class="btn-primary" disabled>Mulai AR</button>
+                
+                <div class="info-note">
+                    <p>Pastikan marker HIRO tersedia dan sensor gerak aktif</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="src/js/app.js"></script>
+</body>
+</html>

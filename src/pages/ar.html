@@ -111,10 +111,11 @@
 
             <!-- Sensor Debug Panel -->
             <div class="sensor-debug" id="sensorDebug">
-                <div class="debug-row">X: <span id="debug-x">-</span></div>
                 <div class="debug-row">Y: <span id="debug-y">-</span></div>
-                <div class="debug-row">Z: <span id="debug-z">-</span></div>
+                <div class="debug-row">YRange: <span id="debug-y-range">-</span></div>
+                <div class="debug-row">Y Status: <span id="debug-y-status">-</span></div>
                 <div class="debug-row">Mag: <span id="debug-magnitude">-</span></div>
+                <div class="debug-row">Src: <span id="debug-source">-</span></div>
                 <div class="debug-row">Mv: <span id="debug-moving-dur">-</span></div>
                 <div class="debug-row">St: <span id="debug-stable-dur">-</span></div>
                 <div class="debug-status"><span id="debug-motion-state">Menunggu</span></div>
@@ -122,7 +123,7 @@
 
             <!-- Bottom Control Panel -->
             <div class="ar-control-panel">
-                <p class="sensor-hint">Scan marker lantai untuk menentukan posisi. Tombol manual untuk koreksi.</p>
+                <p class="sensor-hint">Deteksi lantai menggunakan perubahan gerakan sumbu Y. Pegang HP dengan posisi relatif stabil agar estimasi lebih baik.</p>
                 <button id="requestSensorBtn" class="btn-sensor" style="display: none;">Aktifkan Sensor</button>
                 <div class="control-buttons">
                     <button id="floorUpBtn" class="btn-control">Naik 1 Lantai</button>

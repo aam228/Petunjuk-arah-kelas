@@ -21,67 +21,101 @@ let targetFloor = 1;
 let targetRoomName = '';
 let hasArrivedNotified = false;
 let sensorActive = false;
+let accelerationSourceLogged = false;
 
 // ============================================================
-// SENSOR STATE MACHINE
+// SENSOR STATE MACHINE (Y-AXIS BASED)
 // ============================================================
 
 // State definitions
 const motionState = {
-    IDLE:           "idle",
-    MOVING:         "moving",
-    SHORT_PAUSE:    "short_pause",
-    ARRIVED_STABLE: "arrived_stable"
+    IDLE:            "idle",
+    Y_MOVING:        "y_moving",
+    STABILIZING:     "stabilizing",
+    ARRIVED_STABLE:  "arrived_stable"
 };
 
 let currentMotionState = motionState.IDLE;
 
+// Y-axis samples window untuk deteksi gerakan tangga
+let ySamples = [];
+
 // Timestamps
-let movementStartTime  = null;  // kapan mulai bergerak
-let stableStartTime    = null;  // kapan mulai diam (setelah bergerak)
-let lastMovementTime   = null;  // terakhir kali terdeteksi bergerak
+let movementStartTime  = null;  // kapan user mulai gerak Y signifikan
+let stableStartTime    = null;  // kapan user mulai stabil setelah gerak
 let lastFloorChangeTime = 0;    // terakhir kali lantai berubah
 
-// Counter untuk filter noise
-let movingSampleCount = 0;
+// Marker lock: cegah sensor ubah lantai saat marker aktif
+let markerLockedFloor = null;
 
 // ============================================================
-// PARAMETER SENSOR
+// PARAMETER SENSOR (Y-AXIS BASED)
 // ============================================================
 
-// Magnitude dianggap "diam" jika dalam rentang ini
-// (gravitasi bumi ≈ 9.8 m/s², saat HP diam magnitude ≈ 9.8)
-const STABLE_MIN = 7.0;
-const STABLE_MAX = 13.0;
-
-// Magnitude di atas ini dianggap "bergerak aktif"
-const MOVING_THRESHOLD = 14.0;
-
-// Durasi minimum bergerak agar dihitung sebagai sesi naik/turun tangga
-const MIN_MOVING_DURATION = 2500;   // ms
-
-// Jeda di bordes/sudut tangga: jika diam < nilai ini, belum dihitung sampai
-const SHORT_PAUSE_MAX = 2500;       // ms
-
-// Diam setelah bergerak selama ini → dianggap sudah sampai lantai baru
-const ARRIVAL_STABLE_DURATION = 4500; // ms
-
-// Cooldown antar perubahan lantai (hindari double-trigger)
-const FLOOR_CHANGE_COOLDOWN = 5000; // ms
-
-// Jumlah sample bergerak berturut-turut sebelum masuk state MOVING
-const REQUIRED_MOVING_SAMPLES = 5;
+// Y-axis window dan threshold
+const Y_WINDOW_SIZE = 20;              // sampel Y yang disimpan
+const Y_MOVEMENT_THRESHOLD = 2.5;      // yRange >= ini = user bergerak tangga
+const Y_STABLE_THRESHOLD = 1.2;        // yRange <= ini = user stabil
+const MIN_Y_MOVING_DURATION = 2500;    // durasi minimum gerakan Y sebelum valid
+const ARRIVAL_STABLE_DURATION = 1500;  // durasi diam sebelum perubahan lantai
+const FLOOR_CHANGE_COOLDOWN = 3000;    // cooldown antar perubahan lantai
 
 // ============================================================
-// HELPER FUNCTIONS
+// HELPER FUNCTIONS (Y-AXIS BASED)
 // ============================================================
 
-function isStableMagnitude(magnitude) {
-    return magnitude >= STABLE_MIN && magnitude <= STABLE_MAX;
+// Tambah Y sample ke window
+function addYSample(y) {
+    ySamples.push(y);
+    if (ySamples.length > Y_WINDOW_SIZE) {
+        ySamples.shift();
+    }
 }
 
-function isMovingMagnitude(magnitude) {
-    return magnitude > MOVING_THRESHOLD;
+// Hitung range Y dalam window (max - min)
+function getYRange() {
+    if (ySamples.length === 0) return 0;
+    const minY = Math.min(...ySamples);
+    const maxY = Math.max(...ySamples);
+    return maxY - minY;
+}
+
+// Apakah ada gerakan Y signifikan?
+function isYMoving() {
+    return getYRange() >= Y_MOVEMENT_THRESHOLD;
+}
+
+// Apakah Y sudah stabil?
+function isYStable() {
+    return getYRange() <= Y_STABLE_THRESHOLD;
+}
+
+// Ambil data akselerasi dari kedua sumber
+function getMotionData(event) {
+    const rawAcceleration = event.acceleration;
+    const hasAcceleration = rawAcceleration && (
+        (rawAcceleration.x || 0) !== 0 ||
+        (rawAcceleration.y || 0) !== 0 ||
+        (rawAcceleration.z || 0) !== 0
+    );
+
+    let x, y, z, source;
+    if (hasAcceleration) {
+        x = rawAcceleration.x || 0;
+        y = rawAcceleration.y || 0;
+        z = rawAcceleration.z || 0;
+        source = "acceleration";
+    } else {
+        const acc = event.accelerationIncludingGravity;
+        if (!acc) return null;
+        x = acc.x || 0;
+        y = acc.y || 0;
+        z = acc.z || 0;
+        source = "accelerationIncludingGravity";
+    }
+
+    const rawMagnitude = Math.sqrt(x * x + y * y + z * z);
+    return { x, y, z, source, rawMagnitude };
 }
 
 // Hitung durasi dalam detik, return string "x.xs"
@@ -206,8 +240,8 @@ const floorMarkers = [
     { id: "marker-floor-3", floor: 3, value: 2 }
 ];
 
-// Berapa marker yang sedang aktif terdeteksi
-let activeMarkerCount = 0;
+// Marker aktif dilacak dengan Set agar status tetap akurat walau event berulang
+const activeMarkers = new Set();
 
 function setupMarkerEvents() {
     const markerGuide = document.getElementById('markerGuide');
@@ -217,11 +251,19 @@ function setupMarkerEvents() {
         if (!marker) return;
 
         marker.addEventListener('markerFound', () => {
-            activeMarkerCount++;
+            activeMarkers.add(item.id);
+            markerLockedFloor = item.floor;
+
+            // Reset notifikasi hanya kalau lantai benar-benar berubah
+            if (currentFloor !== item.floor) {
+                hasArrivedNotified = false;
+            }
 
             // Marker menentukan lantai — ini sumber utama
             currentFloor = item.floor;
-            hasArrivedNotified = false; // reset agar notifikasi bisa jalan ulang
+
+            // Reset sensor saat marker dideteksi
+            resetMotionState();
 
             // Update overlay
             document.getElementById('markerStatusText').textContent = 'Terdeteksi';
@@ -231,15 +273,17 @@ function setupMarkerEvents() {
             // Sembunyikan guide saat marker terdeteksi
             if (markerGuide) markerGuide.style.display = 'none';
 
-            console.log(`Marker lantai ${item.floor} terdeteksi → currentFloor = ${currentFloor}`);
+            console.log(`Marker lantai ${item.floor} terdeteksi → markerLockedFloor = ${markerLockedFloor}`);
         });
 
         marker.addEventListener('markerLost', () => {
-            activeMarkerCount = Math.max(0, activeMarkerCount - 1);
+            activeMarkers.delete(item.id);
 
-            if (activeMarkerCount === 0) {
+            if (activeMarkers.size === 0) {
+                markerLockedFloor = null;
                 document.getElementById('markerStatusText').textContent = 'Belum Terdeteksi';
                 if (markerGuide) markerGuide.style.display = 'flex';
+                console.log('Semua marker hilang, sensor dapat diaktifkan kembali');
             }
 
             console.log(`Marker lantai ${item.floor} hilang`);
@@ -287,98 +331,98 @@ function activateMotionSensor() {
 }
 
 // ============================================================
-// HANDLE MOTION — STATE MACHINE UTAMA
+// HANDLE MOTION — STATE MACHINE (Y-AXIS BASED)
 // ============================================================
 function handleMotion(event) {
     if (!sensorActive) return;
 
-    const acc = event.accelerationIncludingGravity;
-    if (!acc) return;
+    const motionData = getMotionData(event);
+    if (!motionData) return;
 
-    const x = acc.x || 0;
-    const y = acc.y || 0;
-    const z = acc.z || 0;
-
-    // Magnitude total vektor akselerasi
-    const magnitude = Math.sqrt(x * x + y * y + z * z);
-
+    const { x, y, z, source, rawMagnitude } = motionData;
     const now = Date.now();
 
-    // --- Tentukan kondisi saat ini ---
-    const stable = isStableMagnitude(magnitude);
-    const moving = isMovingMagnitude(magnitude);
+    // Tambah Y sample ke window
+    addYSample(y);
+    const yRange = getYRange();
 
-    // --- State Machine ---
+    // --- State Machine (Y-based) ---
     switch (currentMotionState) {
 
-        // ── IDLE: user diam, menunggu gerakan ──────────────────
+        // ── IDLE: user diam, menunggu gerakan Y signifikan ──────
         case motionState.IDLE:
-            if (moving) {
-                movingSampleCount++;
-                if (movingSampleCount >= REQUIRED_MOVING_SAMPLES) {
-                    // Cukup sample bergerak → masuk MOVING
-                    currentMotionState = motionState.MOVING;
-                    movementStartTime  = now;
-                    lastMovementTime   = now;
-                    movingSampleCount  = 0;
-                    console.log('State: IDLE → MOVING');
-                }
-            } else {
-                // Reset counter jika tidak bergerak
-                movingSampleCount = 0;
+            if (isYMoving()) {
+                // Deteksi gerakan Y signifikan, mulai track
+                movementStartTime = now;
+                currentMotionState = motionState.Y_MOVING;
+                console.log('State: IDLE → Y_MOVING');
             }
             break;
 
-        // ── MOVING: user sedang naik/turun tangga ──────────────
-        case motionState.MOVING:
-            if (moving) {
-                lastMovementTime = now;
-                movingSampleCount++;
-            } else if (stable) {
-                // Mulai diam → masuk SHORT_PAUSE (mungkin bordes)
-                currentMotionState = motionState.SHORT_PAUSE;
-                stableStartTime    = now;
-                console.log('State: MOVING → SHORT_PAUSE');
+        // ── Y_MOVING: user bergerak dengan Y signifikan ─────────
+        case motionState.Y_MOVING:
+            if (isYMoving()) {
+                // Terus bergerak, maintain state
+                // (terus update movementStartTime window)
+            } else if (isYStable()) {
+                // Y sudah stabil setelah bergerak
+                currentMotionState = motionState.STABILIZING;
+                stableStartTime = now;
+                console.log('State: Y_MOVING → STABILIZING');
             }
             break;
 
-        // ── SHORT_PAUSE: jeda di bordes/sudut tangga ───────────
-        case motionState.SHORT_PAUSE:
-            if (moving) {
-                // Bergerak lagi sebelum timeout → kembali ke MOVING
-                currentMotionState = motionState.MOVING;
-                lastMovementTime   = now;
-                stableStartTime    = null;
-                console.log('State: SHORT_PAUSE → MOVING (bordes terlewati)');
-            } else if (stable) {
+        // ── STABILIZING: tunggu konfirmasi durasi stabil ────────
+        case motionState.STABILIZING:
+            if (isYMoving()) {
+                // Y bergerak lagi, batal
+                currentMotionState = motionState.Y_MOVING;
+                stableStartTime = null;
+                console.log('State: STABILIZING → Y_MOVING (bergerak lagi)');
+            } else if (isYStable()) {
                 const stableDuration = now - stableStartTime;
 
+                // Durasi stable cukup lama? Cek durasi gerak minimum
                 if (stableDuration >= ARRIVAL_STABLE_DURATION) {
-                    // Diam cukup lama → cek apakah sesi bergerak valid
-                    const movingDuration = (lastMovementTime || now) - movementStartTime;
-
-                    if (movingDuration >= MIN_MOVING_DURATION) {
-                        // Sesi perpindahan lantai valid → update lantai
-                        tryChangeFloor(now);
+                    const movingDuration = now - movementStartTime;
+                    
+                    if (movingDuration >= MIN_Y_MOVING_DURATION) {
+                        // Valid transition ke ARRIVED_STABLE
+                        currentMotionState = motionState.ARRIVED_STABLE;
+                        console.log('State: STABILIZING → ARRIVED_STABLE (valid floor change)');
                     } else {
-                        console.log('Gerakan terlalu singkat, diabaikan:', movingDuration + 'ms');
+                        // Durasi gerak terlalu singkat
+                        console.log('Gerakan Y terlalu singkat:', movingDuration + 'ms');
+                        resetMotionState();
                     }
-
-                    // Reset ke IDLE apapun hasilnya
-                    resetMotionState();
                 }
-                // Jika stableDuration < SHORT_PAUSE_MAX → masih tunggu
-                // Jika SHORT_PAUSE_MAX < stableDuration < ARRIVAL_STABLE_DURATION → masih tunggu
+            }
+            break;
+
+        // ── ARRIVED_STABLE: final state sebelum ubah lantai ─────
+        case motionState.ARRIVED_STABLE:
+            if (isYMoving()) {
+                // User bergerak lagi, batal
+                currentMotionState = motionState.Y_MOVING;
+                console.log('State: ARRIVED_STABLE → Y_MOVING (gerak lagi)');
+            } else if (isYStable()) {
+                // Sudah stabil, ubah lantai sekarang
+                tryChangeFloor(now);
+                resetMotionState();
             }
             break;
     }
 
     // Update debug panel setiap frame
     updateSensorDebug({
-        x, y, z, magnitude,
+        y,
+        yRange,
+        yStatus: isYMoving() ? 'Bergerak' : (isYStable() ? 'Stabil' : 'Transisi'),
+        source,
+        rawMagnitude,
         state: currentMotionState,
-        stableDuration: stableStartTime ? now - stableStartTime : 0,
-        movingDuration: movementStartTime ? (lastMovementTime || now) - movementStartTime : 0
+        movingDuration: movementStartTime ? now - movementStartTime : 0,
+        stableDuration: stableStartTime ? now - stableStartTime : 0
     });
 }
 
@@ -386,7 +430,13 @@ function handleMotion(event) {
 // FLOOR CHANGE LOGIC (sensor sebagai pendukung)
 // ============================================================
 function tryChangeFloor(now) {
-    // Sensor hanya bekerja jika lantai sudah diketahui dari marker
+    // Guard: jangan ubah lantai saat marker masih aktif
+    if (markerLockedFloor !== null || activeMarkers.size > 0) {
+        console.log('Marker aktif, sensor dikunci - lantai tidak berubah');
+        return;
+    }
+
+    // Sensor hanya bekerja jika lantai sudah diketahui dari marker sebelumnya
     if (currentFloor === 0) {
         console.log('Lantai belum diketahui, scan marker dulu');
         return;
@@ -418,9 +468,8 @@ function resetMotionState() {
     currentMotionState = motionState.IDLE;
     movementStartTime  = null;
     stableStartTime    = null;
-    lastMovementTime   = null;
-    movingSampleCount  = 0;
-    console.log('Motion state reset ke IDLE');
+    ySamples = [];  // Clear Y window
+    console.log('Motion state reset ke IDLE, Y window cleared');
 }
 
 // ============================================================
@@ -431,11 +480,14 @@ function resetBaseline() {
     lastFloorChangeTime = 0;
 
     updateSensorDebug({
-        x: 0, y: 0, z: 0,
-        magnitude: 0,
+        y: 0,
+        yRange: 0,
+        yStatus: 'Stabil',
+        source: '-',
+        rawMagnitude: 0,
         state: motionState.IDLE,
-        stableDuration: 0,
-        movingDuration: 0
+        movingDuration: 0,
+        stableDuration: 0
     });
 
     console.log('Sensor dikalibrasi ulang');
@@ -444,27 +496,48 @@ function resetBaseline() {
 // ============================================================
 // DEBUG PANEL UPDATE
 // ============================================================
-function updateSensorDebug({ x, y, z, magnitude, state, stableDuration, movingDuration }) {
+function updateSensorDebug({ y, yRange, yStatus, source, rawMagnitude, state, movingDuration, stableDuration }) {
     const setText = (id, value) => {
         const el = document.getElementById(id);
         if (!el) return;
         el.textContent = typeof value === 'number' ? value.toFixed(2) : (value || '-');
     };
 
-    setText('debug-x', x);
+    // Y-axis indikator utama
     setText('debug-y', y);
-    setText('debug-z', z);
-    setText('debug-magnitude', magnitude);
+    setText('debug-y-range', yRange);
+    
+    // Status Y (Stabil / Bergerak / Transisi)
+    const statusYEl = document.getElementById('debug-y-status');
+    if (statusYEl) {
+        statusYEl.textContent = yStatus || 'Transisi';
+    }
 
-    // Label state yang lebih ramah
+    // Tampilkan magnitude untuk referensi (bukan keputusan)
+    setText('debug-magnitude', rawMagnitude);
+    
+    // Tampilkan sumber akselerasi
+    const sourceEl = document.getElementById('debug-source');
+    if (sourceEl) {
+        sourceEl.textContent = source === 'acceleration' ? 'accel' : (source === 'accelerationIncludingGravity' ? 'incG' : '-');
+    }
+
+    // Label state machine Y-based
     const stateLabel = {
         [motionState.IDLE]:           'Diam',
-        [motionState.MOVING]:         'Bergerak',
-        [motionState.SHORT_PAUSE]:    'Bordes',
-        [motionState.ARRIVED_STABLE]: 'Sampai'
+        [motionState.Y_MOVING]:       'Gerak Y signifikan',
+        [motionState.STABILIZING]:    'Stabilisasi',
+        [motionState.ARRIVED_STABLE]: 'Sampai lantai baru'
     };
-    const el = document.getElementById('debug-motion-state');
-    if (el) el.textContent = stateLabel[state] || state;
+    
+    const statusEl = document.getElementById('debug-motion-state');
+    if (statusEl) {
+        if (markerLockedFloor !== null || activeMarkers.size > 0) {
+            statusEl.textContent = 'Marker aktif, sensor dikunci';
+        } else {
+            statusEl.textContent = stateLabel[state] || 'Menunggu gerakan Y';
+        }
+    }
 
     // Durasi dalam detik
     const setDuration = (id, ms) => {
@@ -472,8 +545,8 @@ function updateSensorDebug({ x, y, z, magnitude, state, stableDuration, movingDu
         if (!el) return;
         el.textContent = ms > 0 ? (ms / 1000).toFixed(1) + 's' : '-';
     };
-    setDuration('debug-stable-dur', stableDuration);
     setDuration('debug-moving-dur', movingDuration);
+    setDuration('debug-stable-dur', stableDuration);
 }
 
 // ============================================================

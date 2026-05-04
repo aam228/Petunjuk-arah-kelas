@@ -178,8 +178,10 @@ body {
 .ar-body #arScene {
     position: fixed;
     top: 0;
-    left: 0;
-    width: 100vw;
+    left: 50%;
+    width: 100%;
+    max-width: 430px;
+    transform: translateX(-50%);
     height: 100vh;
     height: 100dvh;
     z-index: 0;
@@ -189,8 +191,10 @@ body {
 .ar-body #arjs-video {
     position: fixed;
     top: 0;
-    left: 0;
-    width: 100vw;
+    left: 50%;
+    width: 100%;
+    max-width: 430px;
+    transform: translateX(-50%);
     height: 100vh;
     height: 100dvh;
     object-fit: cover;

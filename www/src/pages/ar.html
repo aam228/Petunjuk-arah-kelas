@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AR Mode - Penunjuk Arah</title>
+    <link rel="stylesheet" href="../../src/css/style.css">
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
+</head>
+<body class="ar-body">
+    <a-scene
+        id="arScene"
+        embedded
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3_HAMMING63;"
+        vr-mode-ui="enabled: false"
+        renderer="logarithmicDepthBuffer: true; alpha: true; antialias: true;">
+
+        <!-- =====================================================
+             ASSETS — taruh file .glb kamu di assets/models/
+             Ganti nama file sesuai file yang kamu punya.
+             ===================================================== -->
+        <a-assets timeout="10000">
+            <a-asset-item id="floorModel" src="../../assets/models/number.glb"></a-asset-item>
+        </a-assets>
+
+        <!--
+            Marker di tembok → kamera horizontal menghadap marker.
+            Sistem koordinat AR.js saat marker di tembok:
+              - sumbu Y mengarah ke atas (dari marker ke langit-langit)
+              - sumbu Z mengarah keluar dari tembok (ke arah kamera)
+            Maka model cukup digeser ke Z positif agar "keluar" dari tembok,
+            tanpa perlu rotasi tambahan — model sudah menghadap kamera.
+            
+            position="0 0 1"  → model muncul 1 unit di depan marker (ke arah kamera)
+            scale="2 2 2"     → diperbesar
+            rotation="0 0 0"  → tidak perlu dirotasi untuk marker di tembok
+        -->
+
+        <!-- Marker Lantai 1 — barcode 3x3_HAMMING63 value 0 -->
+        <a-marker id="marker-floor-1" type="barcode" value="0">
+            <a-entity id="floor-model-wrapper-1">
+                <a-gltf-model
+                    id="floorModelEntity1"
+                    src="#floorModel"
+                    position="0 0 0.3"
+                    rotation="0 0 0"
+                    scale="2 2 2">
+                </a-gltf-model>
+            </a-entity>
+        </a-marker>
+
+        <!-- Marker Lantai 2 — barcode 3x3_HAMMING63 value 1 -->
+        <a-marker id="marker-floor-2" type="barcode" value="1">
+            <a-entity id="floor-model-wrapper-2">
+                <a-gltf-model
+                    id="floorModelEntity2"
+                    src="#floorModel"
+                    position="0 0 0.3"
+                    rotation="0 0 0"
+                    scale="2 2 2">
+                </a-gltf-model>
+            </a-entity>
+        </a-marker>
+
+        <!-- Marker Lantai 3 — barcode 3x3_HAMMING63 value 2 -->
+        <a-marker id="marker-floor-3" type="barcode" value="2">
+            <a-entity id="floor-model-wrapper-3">
+                <a-gltf-model
+                    id="floorModelEntity3"
+                    src="#floorModel"
+                    position="0 0 0.3"
+                    rotation="0 0 0"
+                    scale="2 2 2">
+                </a-gltf-model>
+            </a-entity>
+        </a-marker>
+
+        <a-entity camera></a-entity>
+    </a-scene>
+
+    <!-- Mobile Frame for UI Overlay Only -->
+    <div class="mobile-frame">
+        <div class="ar-overlay">
+
+            <!-- Top Status Panel -->
+            <div class="ar-status-panel">
+                <div class="status-row">
+                    <span class="status-label">Marker</span>
+                    <span class="status-value" id="markerStatusText">Belum Terdeteksi</span>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">Lantai</span>
+                    <span class="status-value" id="currentFloorDisplay">-</span>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">Tujuan</span>
+                    <span class="status-value" id="targetRoomDisplay">-</span>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">Sensor</span>
+                    <span class="status-value" id="sensorStatus">Tidak Aktif</span>
+                </div>
+            </div>
+
+            <!-- Marker Guide (hidden when any marker detected) -->
+            <div class="marker-guide" id="markerGuide">
+                <p class="guide-text">Arahkan kamera ke marker lantai</p>
+                <a href="marker-lantai.html" target="_blank" class="guide-link">Lihat marker</a>
+            </div>
+
+            <!-- Sensor Debug Panel -->
+            <div class="sensor-debug" id="sensorDebug">
+                <div class="debug-row">X: <span id="debug-x">-</span></div>
+                <div class="debug-row">Y: <span id="debug-y">-</span></div>
+                <div class="debug-row">Z: <span id="debug-z">-</span></div>
+                <div class="debug-row">Mag: <span id="debug-magnitude">-</span></div>
+                <div class="debug-row">Mv: <span id="debug-moving-dur">-</span></div>
+                <div class="debug-row">St: <span id="debug-stable-dur">-</span></div>
+                <div class="debug-status"><span id="debug-motion-state">Menunggu</span></div>
+            </div>
+
+            <!-- Bottom Control Panel -->
+            <div class="ar-control-panel">
+                <p class="sensor-hint">Scan marker lantai untuk menentukan posisi. Tombol manual untuk koreksi.</p>
+                <button id="requestSensorBtn" class="btn-sensor" style="display: none;">Aktifkan Sensor</button>
+                <div class="control-buttons">
+                    <button id="floorUpBtn" class="btn-control">Naik 1 Lantai</button>
+                    <button id="floorDownBtn" class="btn-control">Turun 1 Lantai</button>
+                </div>
+                <button id="resetBaselineBtn" class="btn-reset">Kalibrasi Ulang Sensor</button>
+                <button id="backBtn" class="btn-back">Kembali</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="../js/ar.js"></script>
+</body>
+</html>

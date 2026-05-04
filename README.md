@@ -52,7 +52,7 @@ Aplikasi ini dibuat untuk mata kuliah Virtual Augmented Reality dengan menerapka
    - Gunakan tombol manual untuk koreksi lantai
    - Sensor gerak (opsional) akan otomatis mendeteksi perpindahan lantai
 
-## 📱 Fitur Aplikasi
+##  Fitur Aplikasi
 
 ### Halaman Index (index.html)
 - ✅ Pilih ruang tujuan

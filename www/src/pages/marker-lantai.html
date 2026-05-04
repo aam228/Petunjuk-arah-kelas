@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marker AR Lantai</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #f1f5f9;
+            color: #0f172a;
+            padding: 24px;
+        }
+
+        /* ── Controls (hidden on print) ── */
+        .controls {
+            max-width: 480px;
+            margin: 0 auto 24px;
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+
+        .controls h2 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #334155;
+        }
+
+        .floor-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .floor-tab {
+            flex: 1;
+            padding: 10px 0;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            background: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            color: #64748b;
+        }
+
+        .floor-tab.active {
+            color: #fff;
+            border-color: transparent;
+        }
+
+        .floor-tab[data-floor="1"].active { background: #0f766e; }
+        .floor-tab[data-floor="2"].active { background: #2563eb; }
+        .floor-tab[data-floor="3"].active { background: #7c3aed; }
+
+        .btn-print {
+            display: block;
+            width: 100%;
+            margin-top: 12px;
+            padding: 12px;
+            background: #0f172a;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-back-link {
+            display: block;
+            text-align: center;
+            margin-top: 8px;
+            padding: 10px;
+            color: #64748b;
+            font-size: 13px;
+            text-decoration: none;
+        }
+
+        /* ── Poster ── */
+        .poster-wrap {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .poster {
+            background: #fff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+        }
+
+        /* Header warna berubah per lantai */
+        .poster-header {
+            padding: 28px 24px 20px;
+            text-align: center;
+            color: #fff;
+        }
+
+        .poster-header .building-name {
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+
+        .poster-header .floor-number {
+            font-size: 80px;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -2px;
+        }
+
+        .poster-header .floor-text {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-top: 4px;
+            opacity: 0.9;
+        }
+
+        /* Warna header per lantai */
+        .floor-1 .poster-header { background: #0f766e; }
+        .floor-2 .poster-header { background: #2563eb; }
+        .floor-3 .poster-header { background: #7c3aed; }
+
+        /* Marker section */
+        .marker-section {
+            padding: 28px 24px;
+            text-align: center;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .marker-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #94a3b8;
+            margin-bottom: 16px;
+        }
+
+        .marker-frame {
+            display: inline-block;
+            padding: 16px;
+            border-radius: 12px;
+            border: 3px solid #e2e8f0;
+            background: #fff;
+        }
+
+        .floor-1 .marker-frame { border-color: #0f766e; }
+        .floor-2 .marker-frame { border-color: #2563eb; }
+        .floor-3 .marker-frame { border-color: #7c3aed; }
+
+        /* Barcode marker 3x3 — digambar dengan SVG inline */
+        .barcode-marker {
+            display: block;
+            width: 200px;
+            height: 200px;
+            image-rendering: pixelated;
+        }
+
+        .marker-caption {
+            margin-top: 14px;
+            font-size: 13px;
+            color: #64748b;
+            line-height: 1.5;
+        }
+
+        /* Info section */
+        .info-section {
+            padding: 20px 24px 24px;
+            text-align: center;
+        }
+
+        .info-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 8px;
+        }
+
+        .info-steps {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .info-steps li {
+            font-size: 12px;
+            color: #64748b;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            text-align: left;
+        }
+
+        .step-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            font-size: 10px;
+            font-weight: 700;
+            color: #fff;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .floor-1 .step-num { background: #0f766e; }
+        .floor-2 .step-num { background: #2563eb; }
+        .floor-3 .step-num { background: #7c3aed; }
+
+        /* ── Print styles ── */
+        @media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+
+            .controls,
+            .btn-back-link {
+                display: none !important;
+            }
+
+            .poster-wrap {
+                max-width: none;
+            }
+
+            .poster {
+                box-shadow: none;
+                border-radius: 0;
+            }
+
+            .barcode-marker {
+                width: 8cm;
+                height: 8cm;
+            }
+
+            .poster-header .floor-number {
+                font-size: 100px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 12px; }
+
+            .poster-header .floor-number { font-size: 64px; }
+            .poster-header .floor-text { font-size: 15px; }
+
+            .barcode-marker {
+                width: 160px;
+                height: 160px;
+            }
+        }
+    </style>
+</head>
+<body class="floor-1">
+
+    <!-- Controls -->
+    <div class="controls">
+        <h2>Pilih Lantai</h2>
+        <div class="floor-tabs">
+            <button class="floor-tab active" data-floor="1">Lantai 1</button>
+            <button class="floor-tab" data-floor="2">Lantai 2</button>
+            <button class="floor-tab" data-floor="3">Lantai 3</button>
+        </div>
+        <button class="btn-print" onclick="window.print()">Print Marker</button>
+        <a href="../../index.html" class="btn-back-link">Kembali ke Aplikasi</a>
+    </div>
+
+    <!-- Poster -->
+    <div class="poster-wrap">
+        <div class="poster" id="poster">
+
+            <div class="poster-header">
+                <div class="building-name">Gedung Kampus</div>
+                <div class="floor-number" id="floorNumber">1</div>
+                <div class="floor-text">Lantai</div>
+            </div>
+
+            <div class="marker-section">
+                <div class="marker-label">Scan dengan Aplikasi AR</div>
+                <div class="marker-frame">
+                    <!--
+                        AR.js barcode marker 3x3 — value sesuai lantai.
+                        Gambar diambil dari AR.js barcode marker generator.
+                        URL pattern: https://github.com/nicktindall/cyclon.p2p-rtc-client
+                        Kita gunakan SVG inline yang merepresentasikan pola 3x3 matrix code.
+
+                        Pola 3x3 matrix code AR.js:
+                        Value 1: border hitam + inner pattern 1
+                        Value 2: border hitam + inner pattern 2
+                        Value 3: border hitam + inner pattern 3
+
+                        Referensi gambar resmi AR.js barcode marker:
+                        https://github.com/AR-js-org/AR.js/tree/master/data/images
+                    -->
+                    <img
+                        id="markerImage"
+                        class="barcode-marker"
+                        src=""
+                        alt="Barcode Marker Lantai"
+                    >
+                </div>
+                <p class="marker-caption" id="markerCaption">
+                    Marker Lantai 1 — Barcode 3x3 value 1<br>
+                    Tempelkan di dinding atau meja pada lantai ini
+                </p>
+            </div>
+
+            <div class="info-section">
+                <p class="info-title">Cara Penggunaan</p>
+                <ul class="info-steps">
+                    <li>
+                        <span class="step-num">1</span>
+                        Print marker ini dan tempel di lantai yang sesuai
+                    </li>
+                    <li>
+                        <span class="step-num">2</span>
+                        Buka aplikasi AR dan pilih ruang tujuan
+                    </li>
+                    <li>
+                        <span class="step-num">3</span>
+                        Arahkan kamera ke marker — angka lantai akan muncul
+                    </li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // URL gambar barcode marker dari repo resmi artoolkit
+        // Repo: nicolocarpignoli/artoolkit-barcode-markers-collection
+        // Folder: 3x3_hamming_6_3 (Hamming distance 3, lebih mudah dideteksi)
+        // value 0 → lantai 1, value 1 → lantai 2, value 2 → lantai 3
+        const markerImages = {
+            1: "https://raw.githubusercontent.com/nicolocarpignoli/artoolkit-barcode-markers-collection/master/3x3_hamming_6_3/0.png",
+            2: "https://raw.githubusercontent.com/nicolocarpignoli/artoolkit-barcode-markers-collection/master/3x3_hamming_6_3/1.png",
+            3: "https://raw.githubusercontent.com/nicolocarpignoli/artoolkit-barcode-markers-collection/master/3x3_hamming_6_3/2.png"
+        };
+
+        // Fallback: jika CDN tidak tersedia, gunakan SVG inline
+        const markerSVG = {
+            1: generateBarcodeSVG(0),
+            2: generateBarcodeSVG(1),
+            3: generateBarcodeSVG(2)
+        };
+
+        // Warna per lantai
+        const floorColors = {
+            1: "#0f766e",
+            2: "#2563eb",
+            3: "#7c3aed"
+        };
+
+        let currentFloor = 1;
+
+        // Generate SVG barcode marker sebagai fallback jika CDN gagal
+        // Pola ini adalah representasi visual sederhana, bukan pola AR.js yang tepat.
+        // Jika CDN gagal, user sebaiknya download gambar marker secara manual.
+        function generateBarcodeSVG(value) {
+            // Pola visual sederhana per value untuk identifikasi visual
+            // Bukan pola AR.js yang sebenarnya — hanya untuk fallback display
+            const patterns = {
+                0: [[1,0,1],[0,0,0],[1,0,1]],  // lantai 1
+                1: [[1,1,0],[0,0,1],[0,1,1]],  // lantai 2
+                2: [[0,1,1],[1,0,0],[1,1,0]]   // lantai 3
+            };
+
+            const p = patterns[value] || patterns[0];
+            const size = 200;
+            const border = 24;
+            const inner = size - border * 2;
+            const cell = inner / 3;
+
+            let cells = '';
+            for (let r = 0; r < 3; r++) {
+                for (let c = 0; c < 3; c++) {
+                    if (p[r][c] === 1) {
+                        const x = border + c * cell;
+                        const y = border + r * cell;
+                        cells += `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" fill="black"/>`;
+                    }
+                }
+            }
+
+            // Encode SVG untuk data URL
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" fill="white"/><rect x="0" y="0" width="${size}" height="${border}" fill="black"/><rect x="0" y="${size-border}" width="${size}" height="${border}" fill="black"/><rect x="0" y="0" width="${border}" height="${size}" fill="black"/><rect x="${size-border}" y="0" width="${border}" height="${size}" fill="black"/>${cells}</svg>`;
+            return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+        }
+
+        function setFloor(floor) {
+            currentFloor = floor;
+
+            // Update body class
+            document.body.classList.remove('floor-1', 'floor-2', 'floor-3');
+            document.body.classList.add(`floor-${floor}`);
+
+            // Update floor number display
+            document.getElementById('floorNumber').textContent = floor;
+
+            // Update marker image — coba CDN dulu, fallback ke SVG
+            const img = document.getElementById('markerImage');
+            img.onerror = function() {
+                // CDN gagal → pakai SVG inline
+                img.src = markerSVG[floor];
+                img.onerror = null;
+            };
+            img.src = markerImages[floor];
+
+            // Update caption
+            const captions = {
+                1: "Marker Lantai 1 — 3x3 HAMMING63 value 0",
+                2: "Marker Lantai 2 — 3x3 HAMMING63 value 1",
+                3: "Marker Lantai 3 — 3x3 HAMMING63 value 2"
+            };
+            document.getElementById('markerCaption').innerHTML =
+                `${captions[floor]}<br>Tempelkan di dinding atau meja pada lantai ini`;
+
+            // Update tab active state
+            document.querySelectorAll('.floor-tab').forEach(tab => {
+                tab.classList.toggle('active', parseInt(tab.dataset.floor) === floor);
+            });
+
+            document.title = `Marker AR Lantai ${floor}`;
+        }
+
+        // Tab click handler
+        document.querySelectorAll('.floor-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                setFloor(parseInt(tab.dataset.floor));
+            });
+        });
+
+        // Init dengan lantai 1
+        setFloor(1);
+    </script>
+</body>
+</html>

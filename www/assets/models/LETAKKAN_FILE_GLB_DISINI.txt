@@ -1,0 +1,7 @@
+Taruh file .glb kamu di folder ini.
+
+Setelah file ada, update src di ar.html:
+  <a-asset-item id="floorModel" src="assets/models/NAMA_FILE_KAMU.glb">
+
+Contoh jika file bernama "angka.glb":
+  <a-asset-item id="floorModel" src="assets/models/angka.glb">
